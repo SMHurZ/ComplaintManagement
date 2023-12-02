@@ -1,119 +1,86 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <cstring>
 #include <vector>
 using namespace std;
 
-class User //Virtual Class -- Principles followed: Interface & Liskov's
-{
-    public:
+class User {
+public:
     string userName;
     string password;
-    virtual void display(){}
-    virtual void loginAuthentication(string userName, string password){}
-
+    virtual void display() {}
+    virtual void loginAuthentication(string userName, string password) {}
 };
 
-class Department
-{
-     private:
-     string deptName;
-     Complaint * complaint;
-     Manager * manager;
-     Employee * employee;
-    
-     public:
-        
+class Department {
+private:
+    string deptName;
+
+public:
+    void setValue(string deptName) {
+        this->deptName = deptName;
+    }
+
+    void getValue() {
+        cout << deptName;
+    }
 };
 
-class Teacher : public User
-{
-    private:
-    Complaint * complaint;
+class DataHandler {
+protected:
+    vector<Department> department;
 
-    public:
+public:
+    virtual void loadData() {
+        // Base class loadData() implementation
+        // Here you can put a generic behavior for loading data if needed
+    }
+
+    vector<Department> getDepartments() {
+        return department;
+    }
+
+    virtual void storeData() {}
 };
 
-
-class Manager : public User
-{
-    private:
-    Department * department;
-
-    public:
-    
-};
-
-class Employee : public User
-{
-    public:
-        
-};
-
-class Director : public User
-{
-    public:
-
-};
-
-class Administrator : public User
-{
-    
-};
-
-class Complaint
-{
-    private:
-    int complaintID;
-    string desc;
-    Department * department;
-    Teacher * teacher;
-    Employee * assignedEmployee;
-
-    public:
-    
-};
-
-
-class SystemHandler
-{
-    private:
-       vector<Department> department; 
-    public:
-    
-    void accessData(DataHandler& dataHandler){
-    };
-    void display(){};
-};
-
-class DataHandler 
-{
-    public:
-    void loadData()
-    {
-        Department * tempD;
+class DepartmentHandler : public DataHandler {
+public:
+    void loadData() override {
+        Department tempD;
         string temp;
-        ofstream fout;
-        fout.open("dept_names.txt");
-        while(fout)
-        {
-            getline(cin,temp);
-            if (temp=="-1")
+        ifstream fin;
+        fin.open("dept_names.txt");
+        while (getline(fin, temp)) {
+            if (temp == "-1")
                 break;
-            cout<<temp;
+            tempD.setValue(temp);
+            department.push_back(tempD);
         }
-    };
-    void storeData(){};
+    }
 };
 
+class SystemHandler {
+private:
+    vector<Department> department;
+    Department D;
 
-void main()
-{
-    DataHandler dataHandler;
+public:
+    void accessData(DataHandler& dataHandler) {
+        dataHandler.loadData(); // Load data using polymorphism
+        department = dataHandler.getDepartments();
+        if (!department.empty()) {
+            D = department.front();
+            D.getValue();
+        }
+    }
+
+    void display() {}
+};
+
+int main() {
+    DepartmentHandler departmentHandler; // Use DepartmentHandler
     SystemHandler systemHandler;
 
-    dataHandler.loadData();
-    systemHandler.accessData(dataHandler);
- 
+    systemHandler.accessData(departmentHandler); // Pass DepartmentHandler object
+    return 0;
 }

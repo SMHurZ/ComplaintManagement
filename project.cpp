@@ -4,13 +4,101 @@
 #include <vector>
 using namespace std;
 
-class User {
-public:
+//Classes
+class User;
+class Admin;
+class Director;
+class Teacher;
+class Manager;
+class Employee;
+class Department;
+class Complaint;
+class DataHandler;
+class SytermHandler;
+
+class User //Parent Class for people, follows Interface & Liskov's Principles
+{
+protected:
     string userName;
     string password;
+public:
+    User(string userName, string password) {this->userName=userName; this->password=password;}
     virtual void display() {}
     virtual void loginAuthentication(string userName, string password) {}
 };
+
+class Admin : public User
+{
+private:
+public:
+    Admin(string userName, string password) : User(userName, password) {}
+};
+
+class Teacher : public User 
+{
+private:
+    Complaint * complaints;
+public:
+    Teacher(string userName, string password) : User(userName, password) {}
+    
+    void FileComplaint()
+    {
+        int id, status; string desc, deptName;  
+    }
+};
+
+class Manager : public User 
+{
+private:
+public:
+    Manager(string userName, string password) : User(userName, password) {}
+};
+
+class Employee : public User
+{
+private:
+public:
+    Employee(string userName, string password) : User(userName, password) {}
+};
+
+class Director : public User
+{
+private:
+public:
+    Director(string userName, string password) : User(userName, password) {}
+};
+
+
+class Complaint {
+private:
+    int id; 
+    string desc;
+    int status;
+    string TeacherName;
+    string deptName; 
+
+public:
+    Complaint(const string& description, const string& department, int newStatus, const string& teacher, const string& departmentName)
+        : desc(description), status(newStatus), TeacherName(teacher), deptName(departmentName) {}
+
+    string getDesc() const {
+        return desc;
+    }
+
+    string getDeptName() const {
+        return deptName;
+    }
+
+    int getStatus() const {
+        return status;
+    }
+
+    string getTeacherName() const {
+        return TeacherName;
+    }
+};
+
+
 
 class Department {
 private:
@@ -20,27 +108,29 @@ public:
     void setValue(string deptName) {
         this->deptName = deptName;
     }
-
-    void getValue() {
+    void getValue() const {
         cout << deptName;
     }
 };
 
-class DataHandler {
+class DataHandler 
+{
 protected:
     vector<Department> department;
+    vector<Complaint> complaints;
 
 public:
-    virtual void loadData() {
-        // Base class loadData() implementation
-        // Here you can put a generic behavior for loading data if needed
-    }
+    virtual void loadData() {}
+
+    virtual void storeData() {}
 
     vector<Department> getDepartments() {
         return department;
     }
+    vector<Complaint> getComplaints(){
+        return complaints;
+    }
 
-    virtual void storeData() {}
 };
 
 class DepartmentHandler : public DataHandler {
@@ -58,30 +148,127 @@ public:
         }
     }
 };
+class ComplaintHandler : public DataHandler {
+public:
+    void loadData() override {
+        ifstream fin;
+        fin.open("complaints.txt");
+        if (!fin.is_open()) {
+            cout << "Error opening complaints.txt" << endl;
+            return;
+        }
+
+        string line;
+        while (getline(fin, line)) {
+            string desc, deptName, teacher;
+            int status;
+
+            desc = line; // First line is the description
+            getline(fin, deptName); // Second line is the department name
+            getline(fin, line); // Third line is the status
+            status = stoi(line); // Convert status to int
+            getline(fin, teacher); // Fourth line is the teacher name
+
+            Complaint complaint(desc, deptName, status, teacher, deptName);
+            complaints.push_back(complaint);
+        }
+        fin.close();
+    }
+
+    void storeData() override {
+        ofstream fout("complaints.txt");
+        if (!fout.is_open()) {
+            cout << "Error opening complaints.txt for writing" << endl;
+            return;
+        }
+
+        for (const auto& complaint : complaints) {
+            fout << complaint.getDesc() << "\n"
+                 << complaint.getDeptName() << "\n"
+                 << complaint.getStatus() << "\n"
+                 << complaint.getTeacherName() << "\n";
+        }
+        fout.close();
+    }
+};
+
+
+
+
+class TeacherHandler : public DataHandler {
+public:
+    void loadData() override {
+    }
+};
+
+class ManagerHandler : public DataHandler {
+public:
+    void loadData() override {
+    }
+};
+
 
 class SystemHandler {
 private:
-    vector<Department> department;
-    Department D;
+    DataHandler* dataHandler; 
 
 public:
-    void accessData(DataHandler& dataHandler) {
-        dataHandler.loadData(); // Load data using polymorphism
-        department = dataHandler.getDepartments();
-        if (!department.empty()) {
-            D = department.front();
-            D.getValue();
+    SystemHandler() : dataHandler(nullptr) {}
+
+    void setDataHandler(DataHandler* handler) {
+        dataHandler = handler;
+    }
+
+    void accessData() {
+        if (dataHandler != nullptr) {
+            dataHandler->loadData();
         }
     }
 
-    void display() {}
+    void displayDepartments() {
+    if (dataHandler != nullptr) {
+        vector<Department> departments = dataHandler->getDepartments();
+        for (const auto& department : departments) {
+            department.getValue(); // Display department name
+        }
+        cout<<endl;
+    }
+}
+
+void displayComplaints() {
+    if (dataHandler != nullptr) {
+        vector<Complaint> complaints = dataHandler->getComplaints();
+        for (const auto& complaint : complaints) {
+            complaint.getDesc();
+            cout << "Description: " << complaint.getDesc() << endl;
+            cout << "Department: " << complaint.getDeptName() << endl;
+            cout << "Status: " << complaint.getStatus() << endl;
+            cout << "Teacher: " << complaint.getTeacherName() << endl;
+            cout << "----------------------" << endl;
+        }
+    }
+}
+
 };
 
+
 int main() {
-    DepartmentHandler departmentHandler; // Use DepartmentHandler
+    DepartmentHandler departmentHandler; 
+    TeacherHandler teacherHandler; 
+    ManagerHandler managerHandler; 
+    ComplaintHandler complaintHandler;
     SystemHandler systemHandler;
 
-    systemHandler.accessData(departmentHandler); // Pass DepartmentHandler object
+    systemHandler.setDataHandler(&departmentHandler);
+    systemHandler.accessData();
+    systemHandler.displayDepartments();
+
+    systemHandler.setDataHandler(&complaintHandler);
+    systemHandler.accessData();
+    systemHandler.displayComplaints();
+
+    // Similar for other handlers...
+
     return 0;
-    LALALALALAL
 }
+

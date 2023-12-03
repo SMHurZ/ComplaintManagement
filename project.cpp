@@ -7,6 +7,7 @@ using namespace std;
 //Classes
 class User;
 class Admin;
+class SystemHandler;
 class Director;
 class Teacher;
 class Manager;
@@ -14,7 +15,6 @@ class Employee;
 class Department;
 class Complaint;
 class DataHandler;
-class SytermHandler;
 
 class User //Parent Class for people, follows Interface & Liskov's Principles
 {
@@ -59,13 +59,6 @@ class Employee : public User
 private:
 public:
     Employee(string userName, string password) : User(userName, password) {}
-};
-
-class Director : public User
-{
-private:
-public:
-    Director(string userName, string password) : User(userName, password) {}
 };
 
 
@@ -239,7 +232,6 @@ void displayComplaints() {
     if (dataHandler != nullptr) {
         vector<Complaint> complaints = dataHandler->getComplaints();
         for (const auto& complaint : complaints) {
-            complaint.getDesc();
             cout << "Description: " << complaint.getDesc() << endl;
             cout << "Department: " << complaint.getDeptName() << endl;
             cout << "Status: " << complaint.getStatus() << endl;
@@ -249,6 +241,42 @@ void displayComplaints() {
     }
 }
 
+void getComplaintsByDept(string dept)
+{
+    if (dataHandler != nullptr) {
+    vector<Complaint> complaints = dataHandler->getComplaints();
+    cout<<"Complaints for "<<dept<<" are: "<<endl;
+        for (const auto& complaint : complaints) {
+            if(complaint.getDeptName()==dept)
+            {
+                cout << "Description: " << complaint.getDesc() << endl;
+                cout << "Status: " << complaint.getStatus() << endl;
+                cout << "Teacher: " << complaint.getTeacherName() << endl;
+                cout << "----------------------" << endl;
+            }
+        }
+    }    
+}
+
+void getComplaintsByDate()
+{
+
+}
+
+};
+
+class Director : public User
+{
+private:
+    SystemHandler * system;
+public:
+    Director(SystemHandler * systemHandler, string userName, string password) : User(userName, password) {system=systemHandler;}
+
+    void complaintsByName(string name)
+    {
+        system->getComplaintsByDept(name);
+    }
+    
 };
 
 
@@ -261,11 +289,16 @@ int main() {
 
     systemHandler.setDataHandler(&departmentHandler);
     systemHandler.accessData();
-    systemHandler.displayDepartments();
+    //systemHandler.displayDepartments();
 
     systemHandler.setDataHandler(&complaintHandler);
     systemHandler.accessData();
-    systemHandler.displayComplaints();
+    //systemHandler.displayComplaints();
+
+    //director comes in
+    systemHandler.setDataHandler(&complaintHandler);
+    Director director(&systemHandler, "hello"  , "world");
+    director.complaintsByName("IT");
 
     // Similar for other handlers...
 
